@@ -128,6 +128,37 @@ public:
          eyePos = vec3(eyeX,eyeY,eyeZ);
    }
 
+   unsigned int loadCubemap(std::vector<string> faces)
+   {
+      unsigned int textureID;
+      glGenTextures(1, &textureID);
+      glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+      int width, height, nrChannels;
+      for (unsigned int i = 0; i < faces.size(); i++)
+      {
+         unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+         if (data)
+         {
+               glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
+                           0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+               );
+               stbi_image_free(data);
+         }
+         else
+         {
+               std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
+               stbi_image_free(data);
+         }
+      }
+      glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+      return textureID;
+   }  
 
    void draw() {
       //renderer.beginShader(shaders[shader]);
@@ -178,6 +209,7 @@ protected:
    int azimuth = 0;
    int elevation = 0;
    string filename;
+   std::vector<string> faces = {"right.jpg","left.jpg","top.jpg","bottom.jpg","front.jpg","back.jpg"};
    std::vector<string> filenames = GetFilenamesInDir("../models", "ply");
    std::vector<string> shaders = {"normals","phong-vertex","phong-pixel","phong-textures","toon"};
    //std::vector<string> textures = {"bacteria","circles","daisy_1","lines"};
