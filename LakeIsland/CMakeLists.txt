@@ -95,6 +95,8 @@ set(SHADERS
     shaders/phong-pixel.vs
     shaders/phong-vertex.fs
     shaders/phong-vertex.vs
+    shaders/skybox.fs
+    shaders/skybox.vs
     shaders/normals.fs
     shaders/normals.vs
     shaders/unlit.fs

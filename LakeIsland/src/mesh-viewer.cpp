@@ -190,7 +190,9 @@ protected:
    int azimuth = 0;
    int elevation = 0;
    string filename;
-   std::vector<string> faces = {"right.jpg","left.jpg","top.jpg","bottom.jpg","front.jpg","back.jpg"};
+   /*vector<std::string> faces = {
+      FileSystem::getPath("../textures/top.jpg"),
+   };*/
    std::vector<string> filenames = GetFilenamesInDir("../models", "ply");
    std::vector<string> shaders = {"normals","phong-vertex","phong-pixel","phong-textures","toon"};
    std::vector<string> textures = {"bacteria","circles","daisy_1","lines"};
