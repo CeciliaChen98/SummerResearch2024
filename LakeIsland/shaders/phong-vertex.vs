@@ -32,6 +32,6 @@ void main()
    float specular = max(dot(R, v), 0.0);
 
    vec3 Is = lightColor * pow(specular, 10);
-   color = Ia + Id + Is;
+   color = Ia + Id;
    gl_Position = MVP * vec4(vPos, 1.0);
 }
