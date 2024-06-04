@@ -26,10 +26,10 @@ public:
 
       renderer.loadTexture("bacteria", "../textures/bacteria.png",0);
 
-      renderer.loadShader("unlit", "../shaders/unlit.vs", "../shaders/unlit.fs");
       renderer.loadShader("phong-vertex", "../shaders/phong-vertex.vs", "../shaders/phong-vertex.fs");
 
-      mesh_island.load("../models/island.ply");
+      mesh_island_small.load("../models/island_small.ply");
+      mesh_island_big.load("../models/island_big.ply");
       mesh_house.load("../models/house.ply");
       mesh_tree.load("../models/tree.ply");
       mesh_bridge.load("../models/bridge.ply");
@@ -120,12 +120,12 @@ public:
       renderer.perspective(glm::radians(60.0f), aspect, 0.1f, 50.0f);
       renderer.lookAt(eyePos, lookPos, up);
 
-      GLfloat maxX = mesh_island.maxBounds()[0];
-      GLfloat maxY = mesh_island.maxBounds()[1];
-      GLfloat maxZ = mesh_island.maxBounds()[2];
-      GLfloat minX = mesh_island.minBounds()[0];
-      GLfloat minY = mesh_island.minBounds()[1];
-      GLfloat minZ = mesh_island.minBounds()[2];
+      GLfloat maxX = mesh_island_big.maxBounds()[0];
+      GLfloat maxY = mesh_island_big.maxBounds()[1];
+      GLfloat maxZ = mesh_island_big.maxBounds()[2];
+      GLfloat minX = mesh_island_big.minBounds()[0];
+      GLfloat minY = mesh_island_big.minBounds()[1];
+      GLfloat minZ = mesh_island_big.minBounds()[2];
       GLfloat dx = maxX - minX;
       GLfloat dy = maxY - minY;
       GLfloat dz = maxZ - minZ;
@@ -146,7 +146,9 @@ public:
 
       // Draw each model with its color
       renderer.setUniform("ModelColor", color_island);
-      renderer.mesh(mesh_island);
+      renderer.mesh(mesh_island_big);
+      renderer.setUniform("ModelColor", color_island);
+      renderer.mesh(mesh_island_small);
       renderer.setUniform("ModelColor", color_tree);
       renderer.mesh(mesh_tree);
       renderer.mesh(mesh_bridge);
@@ -160,7 +162,8 @@ public:
 
    
 protected:
-   PLYMesh mesh_island;
+   PLYMesh mesh_island_small;
+   PLYMesh mesh_island_big;
    PLYMesh mesh_house;
    PLYMesh mesh_tree;
    PLYMesh mesh_bridge;
@@ -182,7 +185,7 @@ protected:
       FileSystem::getPath("../textures/top.jpg"),
    };*/
    std::vector<string> filenames = GetFilenamesInDir("../models", "ply");
-   std::vector<string> shaders = {"unlit","phong-vertex"};
+   std::vector<string> shaders = {"phong-vertex"};
    std::vector<string> textures = {"bacteria"};
 };
 
