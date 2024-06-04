@@ -22,21 +22,17 @@ public:
 
    void setup() {
 
-      filename = "../models/"+filenames[index];
+      //filename = "../models/"+filenames[index];
 
       renderer.loadTexture("bacteria", "../textures/bacteria.png",0);
-      renderer.loadTexture("circles", "../textures/circles.png",0);
-      renderer.loadTexture("lines", "../textures/lines.png",0);
-      renderer.loadTexture("daisy_1", "../textures/daisy_1.png",0);
 
-      renderer.loadShader("normals", "../shaders/normals.vs", "../shaders/normals.fs");
+      renderer.loadShader("unlit", "../shaders/unlit.vs", "../shaders/unlit.fs");
       renderer.loadShader("phong-vertex", "../shaders/phong-vertex.vs", "../shaders/phong-vertex.fs");
-      renderer.loadShader("phong-pixel", "../shaders/phong-pixel.vs", "../shaders/phong-pixel.fs");
-      renderer.loadShader("phong-textures", "../shaders/phong-vertex-textures.vs", "../shaders/phong-vertex-textures.fs");
-      renderer.loadShader("toon", "../shaders/toon.vs", "../shaders/toon.fs");
 
-      mesh.load(filename);
-      //mesh.load("../models/cow-uvs.ply"); for debugging
+      mesh_island.load("../models/island.ply");
+      mesh_house.load("../models/house.ply");
+      mesh_tree.load("../models/tree.ply");
+      mesh_bridge.load("../models/bridge.ply");
    }
 
    void mouseMotion(int x, int y, int dx, int dy) {
@@ -71,32 +67,7 @@ public:
    }
 
    void keyUp(int key, int mods) {
-      if(key==GLFW_KEY_N){
-         index++;
-         if(index>=filenames.size()){
-            index = 0;
-         }
-         eyePos = vec3(10, 0, 0);
-         x=0;y=0;z=0;
-         _scale = 1.0f;
-         string filename = "../models/"+filenames[index];
-         mesh.clear();
-         mesh = PLYMesh(filename);
-      }      
-      if(key==GLFW_KEY_P){
-         index--;
-         if(index<0){
-            index = filenames.size()-1;
-         }
-         eyePos = vec3(10, 0, 0);
-         elevation = 0; azimuth = 0;
-         x=0;y=0;z=0;
-         _scale = 1.0f;
-         string filename = "../models/"+filenames[index];
-         mesh.clear();
-         mesh = PLYMesh(filename);
-      }
-      
+
       if(key==GLFW_KEY_UP){
          _scale = _scale +0.1f;
       }
@@ -149,18 +120,18 @@ public:
       renderer.perspective(glm::radians(60.0f), aspect, 0.1f, 50.0f);
       renderer.lookAt(eyePos, lookPos, up);
 
-      GLfloat maxX = mesh.maxBounds()[0];
-      GLfloat maxY = mesh.maxBounds()[1];
-      GLfloat maxZ = mesh.maxBounds()[2];
-      GLfloat minX = mesh.minBounds()[0];
-      GLfloat minY = mesh.minBounds()[1];
-      GLfloat minZ = mesh.minBounds()[2];
+      GLfloat maxX = mesh_island.maxBounds()[0];
+      GLfloat maxY = mesh_island.maxBounds()[1];
+      GLfloat maxZ = mesh_island.maxBounds()[2];
+      GLfloat minX = mesh_island.minBounds()[0];
+      GLfloat minY = mesh_island.minBounds()[1];
+      GLfloat minZ = mesh_island.minBounds()[2];
       GLfloat dx = maxX - minX;
       GLfloat dy = maxY - minY;
       GLfloat dz = maxZ - minZ;
       GLfloat maxd = std::max(dz,dy);
       maxd = std::max(dx/2,maxd);
-      GLfloat scale =  20.0f/maxd;
+      GLfloat scale =  6.0f/maxd;
       renderer.rotate(vec3(-1,pie/2,0));   
       renderer.scale(vec3(_scale*scale,_scale*scale,_scale*scale)); 
       GLfloat mx = -(maxX+minX)/2.0f;
@@ -168,14 +139,31 @@ public:
       GLfloat mz = -(maxZ+minZ)/2.0f;
       renderer.translate(vec3(mx+x,my+y,mz+z));
 
-      renderer.mesh(mesh);
+      vec3 color_island = vec3(0.71f, 0.96f, 0.46f);  
+      vec3 color_tree = vec3(0.28f, 0.42f, 0.14f);    
+      vec3 color_bridge = vec3(0.6f, 0.4f, 0.4f);  // Example color for bridge
+      vec3 color_house = vec3(0.8f, 0.5f, 0.2f);   // Example color for house
+
+      // Draw each model with its color
+      renderer.setUniform("ModelColor", color_island);
+      renderer.mesh(mesh_island);
+      renderer.setUniform("ModelColor", color_tree);
+      renderer.mesh(mesh_tree);
+      renderer.mesh(mesh_bridge);
+
+      renderer.scale(vec3(0.8,0.8,0.8)); 
+      renderer.mesh(mesh_house);
+
       //renderer.cube(); // for debugging!
       renderer.endShader();
    }
 
    
 protected:
-   PLYMesh mesh;
+   PLYMesh mesh_island;
+   PLYMesh mesh_house;
+   PLYMesh mesh_tree;
+   PLYMesh mesh_bridge;
    vec3 eyePos = vec3(10, 0, 0);
    vec3 lookPos = vec3(0, 0, 0);
    vec3 up = vec3(0, 1, 0);
@@ -194,8 +182,8 @@ protected:
       FileSystem::getPath("../textures/top.jpg"),
    };*/
    std::vector<string> filenames = GetFilenamesInDir("../models", "ply");
-   std::vector<string> shaders = {"normals","phong-vertex","phong-pixel","phong-textures","toon"};
-   std::vector<string> textures = {"bacteria","circles","daisy_1","lines"};
+   std::vector<string> shaders = {"unlit","phong-vertex"};
+   std::vector<string> textures = {"bacteria"};
 };
 
 int main(int argc, char** argv)
