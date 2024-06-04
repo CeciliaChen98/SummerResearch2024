@@ -23,6 +23,18 @@ public:
    void setup() {
 
       filename = "../models/"+filenames[index];
+
+      renderer.loadTexture("bacteria", "../textures/bacteria.png",0);
+      renderer.loadTexture("circles", "../textures/circles.png",0);
+      renderer.loadTexture("lines", "../textures/lines.png",0);
+      renderer.loadTexture("daisy_1", "../textures/daisy_1.png",0);
+
+      renderer.loadShader("normals", "../shaders/normals.vs", "../shaders/normals.fs");
+      renderer.loadShader("phong-vertex", "../shaders/phong-vertex.vs", "../shaders/phong-vertex.fs");
+      renderer.loadShader("phong-pixel", "../shaders/phong-pixel.vs", "../shaders/phong-pixel.fs");
+      renderer.loadShader("phong-textures", "../shaders/phong-vertex-textures.vs", "../shaders/phong-vertex-textures.fs");
+      renderer.loadShader("toon", "../shaders/toon.vs", "../shaders/toon.fs");
+
       mesh.load(filename);
       //mesh.load("../models/cow-uvs.ply"); for debugging
    }
@@ -80,7 +92,7 @@ public:
          elevation = 0; azimuth = 0;
          x=0;y=0;z=0;
          _scale = 1.0f;
-         string filename = "../uv-models/"+filenames[index];
+         string filename = "../models/"+filenames[index];
          mesh.clear();
          mesh = PLYMesh(filename);
       }
@@ -127,43 +139,12 @@ public:
          float eyeZ = 10* sin(azimuth/360.0*2*pie)*cos(elevation/360.0*2*pie);
          eyePos = vec3(eyeX,eyeY,eyeZ);
    }
-
-   unsigned int loadCubemap(std::vector<string> faces)
-   {
-      unsigned int textureID;
-      glGenTextures(1, &textureID);
-      glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
-
-      int width, height, nrChannels;
-      for (unsigned int i = 0; i < faces.size(); i++)
-      {
-         unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
-         if (data)
-         {
-               glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
-                           0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
-               );
-               stbi_image_free(data);
-         }
-         else
-         {
-               std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
-               stbi_image_free(data);
-         }
-      }
-      glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-      return textureID;
-   }  
-
+   
+   
    void draw() {
-      //renderer.beginShader(shaders[shader]);
-      renderer.beginShader("phong-vertex"); 
-     // renderer.texture("diffuseTexture",textures[texture]);
+      renderer.beginShader(shaders[shader]);
+      //renderer.beginShader("phong-vertex"); 
+      renderer.texture("diffuseTexture",textures[texture]);
 
       float aspect = ((float)width()) / height();
       renderer.perspective(glm::radians(60.0f), aspect, 0.1f, 50.0f);
@@ -212,7 +193,7 @@ protected:
    std::vector<string> faces = {"right.jpg","left.jpg","top.jpg","bottom.jpg","front.jpg","back.jpg"};
    std::vector<string> filenames = GetFilenamesInDir("../models", "ply");
    std::vector<string> shaders = {"normals","phong-vertex","phong-pixel","phong-textures","toon"};
-   //std::vector<string> textures = {"bacteria","circles","daisy_1","lines"};
+   std::vector<string> textures = {"bacteria","circles","daisy_1","lines"};
 };
 
 int main(int argc, char** argv)
