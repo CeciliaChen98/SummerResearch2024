@@ -133,7 +133,6 @@ public:
    }
 
    void updateEyePos(){
-         float pie = 3.1415926;
          float eyeX = 10* cos(azimuth/360.0*2*pie)*cos(elevation/360.0*2*pie);
          float eyeY = 10* sin(elevation/360.0*2*pie);
          float eyeZ = 10* sin(azimuth/360.0*2*pie)*cos(elevation/360.0*2*pie);
@@ -161,8 +160,8 @@ public:
       GLfloat dz = maxZ - minZ;
       GLfloat maxd = std::max(dz,dy);
       maxd = std::max(dx/2,maxd);
-      GLfloat scale =  6.0f/maxd;
-      renderer.rotate(vec3(0,0,0));   
+      GLfloat scale =  20.0f/maxd;
+      renderer.rotate(vec3(-1,pie/2,0));   
       renderer.scale(vec3(_scale*scale,_scale*scale,_scale*scale)); 
       GLfloat mx = -(maxX+minX)/2.0f;
       GLfloat my = -(maxY+minY)/2.0f;
@@ -186,6 +185,7 @@ protected:
    float _scale = 1.0f;
    float x=0.0f;
    float y=0.0f;
+   float pie = 3.1415926;
    float z=0.0f;
    int azimuth = 0;
    int elevation = 0;
