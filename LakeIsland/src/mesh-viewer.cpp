@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include "agl/window.h"
+//#include "agl/mesh/skybox.h"
 #include "plymesh.h"
 #include "osutils.h"
 
@@ -24,15 +25,31 @@ public:
 
       //filename = "../models/"+filenames[index];
 
-      renderer.loadTexture("bacteria", "../textures/bacteria.png",0);
+      //renderer.loadTexture("bacteria", "../textures/bacteria.png",0);
 
       renderer.loadShader("phong-vertex", "../shaders/phong-vertex.vs", "../shaders/phong-vertex.fs");
+      renderer.loadShader("skybox","../shaders/skybox.vs", "../shaders/skybox.fs");
 
       mesh_island_small.load("../models/island_small.ply");
       mesh_island_big.load("../models/island_big.ply");
-      mesh_house.load("../models/house.ply");
+      mesh_wall.load("../models/wall.ply");
+      mesh_roof.load("../models/roof.ply");
+      mesh_stone.load("../models/stone.ply");
+      mesh_leaves.load("../models/leaves.ply");
       mesh_tree.load("../models/tree.ply");
       mesh_bridge.load("../models/bridge.ply");
+      mesh_lake.load("../models/lake.ply");
+
+      /* Load skybox textures
+      std::vector<std::string> faces = {
+         "../textures/right.jpg",
+         "../textures/left.jpg",
+         "../textures/top.jpg",
+         "../textures/bottom.jpg",
+         "../textures/front.jpg",
+         "../textures/back.jpg"
+      };
+      //renderer.loadCubemap("skybox", faces,1);*/
    }
 
    void mouseMotion(int x, int y, int dx, int dy) {
@@ -89,18 +106,6 @@ public:
       if(key==GLFW_KEY_D){
          x--;
       }
-      if(key==GLFW_KEY_S){
-         shader++;
-         if(shader>=shaders.size()){
-            shader = 0;
-         }
-      }
-      if(key==GLFW_KEY_W){
-         texture++;
-         if(texture>=textures.size()){
-            texture = 0;
-         }
-      }
    }
 
    void updateEyePos(){
@@ -112,9 +117,20 @@ public:
    
    
    void draw() {
-      renderer.beginShader(shaders[shader]);
-      //renderer.beginShader("phong-vertex"); 
-      renderer.texture("diffuseTexture",textures[texture]);
+
+      /*
+      renderer.beginShader("skybox");
+      glm::mat4 view = glm::mat4(glm::mat3(glm::lookAt(eyePos, lookPos, up))); // Remove translation part
+      renderer.setUniform("view", view);
+      renderer.setUniform("projection", glm::perspective(glm::radians(60.0f), (float)width() / height(), 0.1f, 50.0f));
+      renderer.cubemap("skybox", "skybox");
+
+      skybox.render();
+      renderer.endShader();*/
+
+      //renderer.beginShader(shaders[shader]);
+      renderer.beginShader("phong-vertex"); 
+      //renderer.texture("diffuseTexture",textures[texture]);
 
       float aspect = ((float)width()) / height();
       renderer.perspective(glm::radians(60.0f), aspect, 0.1f, 50.0f);
@@ -139,23 +155,27 @@ public:
       GLfloat mz = -(maxZ+minZ)/2.0f;
       renderer.translate(vec3(mx+x,my+y,mz+z));
 
-      vec3 color_island = vec3(0.71f, 0.96f, 0.46f);  
-      vec3 color_tree = vec3(0.28f, 0.42f, 0.14f);    
-      vec3 color_bridge = vec3(0.6f, 0.4f, 0.4f);  // Example color for bridge
-      vec3 color_house = vec3(0.8f, 0.5f, 0.2f);   // Example color for house
-
       // Draw each model with its color
-      renderer.setUniform("ModelColor", color_island);
+      renderer.setUniform("ModelColor", vec3(0.83f, 0.62f, 0.13f));
       renderer.mesh(mesh_island_big);
-      renderer.setUniform("ModelColor", color_island);
+      renderer.setUniform("ModelColor", vec3(0.71f, 0.96f, 0.46f));
       renderer.mesh(mesh_island_small);
-      renderer.setUniform("ModelColor", color_tree);
+      renderer.setUniform("ModelColor", vec3(0.55f, 0.35f, 0.15f));
       renderer.mesh(mesh_tree);
+      renderer.setUniform("ModelColor", vec3(0.71f, 0.36f, 0.18f));
       renderer.mesh(mesh_bridge);
+      renderer.setUniform("ModelColor", vec3(0.71f, 0.96f, 0.46f));
+      renderer.mesh(mesh_leaves);
+      renderer.setUniform("ModelColor", vec3(0.5f, 0.4f, 0.3f));
+      renderer.mesh(mesh_stone);
+      renderer.setUniform("ModelColor", vec3(0.88f, 0.79f, 0.70f));
+      renderer.mesh(mesh_wall);
+      renderer.setUniform("ModelColor", vec3(0.9f, 0.35f, 0.35f));
+      renderer.mesh(mesh_roof);
 
-      renderer.scale(vec3(0.8,0.8,0.8)); 
-      renderer.mesh(mesh_house);
-
+      renderer.setUniform("ModelColor", vec3(0.34f, 0.82f, 0.87f));
+      renderer.scale(vec3(5,5,5));
+      renderer.mesh(mesh_lake);
       //renderer.cube(); // for debugging!
       renderer.endShader();
    }
@@ -164,9 +184,14 @@ public:
 protected:
    PLYMesh mesh_island_small;
    PLYMesh mesh_island_big;
-   PLYMesh mesh_house;
+   PLYMesh mesh_roof;
    PLYMesh mesh_tree;
+   PLYMesh mesh_leaves;
+   PLYMesh mesh_wall;
+   PLYMesh mesh_stone;
    PLYMesh mesh_bridge;
+   PLYMesh mesh_lake;
+   //SkyBox skybox = SkyBox(1);
    vec3 eyePos = vec3(10, 0, 0);
    vec3 lookPos = vec3(0, 0, 0);
    vec3 up = vec3(0, 1, 0);
@@ -184,9 +209,9 @@ protected:
    /*vector<std::string> faces = {
       FileSystem::getPath("../textures/top.jpg"),
    };*/
-   std::vector<string> filenames = GetFilenamesInDir("../models", "ply");
-   std::vector<string> shaders = {"phong-vertex"};
-   std::vector<string> textures = {"bacteria"};
+   //std::vector<string> filenames = GetFilenamesInDir("../models", "ply");
+   //std::vector<string> shaders = {"phong-vertex"};
+   //std::vector<string> textures = {"bacteria"};
 };
 
 int main(int argc, char** argv)
