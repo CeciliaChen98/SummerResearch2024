@@ -23,7 +23,7 @@ const unsigned int width = 800;
 const unsigned int height = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(glm::vec3(0.0f, 3.0f, 0.0f));
 float lastX = width / 2.0f;
 float lastY = height / 2.0f;
 bool firstMouse = true;
@@ -37,14 +37,14 @@ float lastFrame = 0.0f;
 float skyboxVertices[] =
 {
 	//   Coordinates
-	-10.0f, -10.0f,  10.0f,//        7--------6
-	 10.0f, -10.0f,  10.0f,//       /|       /|
-	 10.0f, -10.0f, -10.0f,//      4--------5 |
-	-10.0f, -10.0f, -10.0f,//      | |      | |
-	-10.0f,  10.0f,  10.0f,//      | 3------|-2
-	 10.0f,  10.0f,  10.0f,//      |/       |/
-	 10.0f,  10.0f, -10.0f,//      0--------1
-	-10.0f,  10.0f, -10.0f
+	-100.0f, -100.0f,  100.0f,//        7--------6
+	 100.0f, -100.0f,  100.0f,//       /|       /|
+	 100.0f, -100.0f, -100.0f,//      4--------5 |
+	-100.0f, -100.0f, -100.0f,//      | |      | |
+	-100.0f,  100.0f,  100.0f,//      | 3------|-2
+	 100.0f,  100.0f,  100.0f,//      |/       |/
+	 100.0f,  100.0f, -100.0f,//      0--------1
+	-100.0f,  100.0f, -100.0f
 };
 
 unsigned int skyboxIndices[] =
@@ -73,10 +73,10 @@ unsigned int skyboxIndices[] =
 
 Vertex lakeVertices[] =
 {
-	Vertex{glm::vec3(-10.0f, 0.0f,  10.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-	Vertex{glm::vec3(-10.0f, 0.0f, -10.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 10.0f)},
-	Vertex{glm::vec3(10.0f, 0.0f, -10.0f),  glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(10.0f, 10.0f)},
-	Vertex{glm::vec3(10.0f, 0.0f,  10.0f),  glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(10.0f, 0.0f)}
+	Vertex{glm::vec3(-100.0f, 1.0f,  100.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
+	Vertex{glm::vec3(-100.0f, 1.0f, -100.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 10.0f)},
+	Vertex{glm::vec3(100.0f, 1.0f, -100.0f),  glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(10.0f, 10.0f)},
+	Vertex{glm::vec3(100.0f, 1.0f,  100.0f),  glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(10.0f, 0.0f)}
 };
 
 
@@ -91,14 +91,14 @@ GLuint lakeIndices[] =
 
 Vertex lightVertices[] =
 { //     COORDINATES     //
-	Vertex{glm::vec3(-0.1f, -0.1f,  0.1f)},
-	Vertex{glm::vec3(-0.1f, -0.1f, -0.1f)},
-	Vertex{glm::vec3(0.1f, -0.1f, -0.1f)},
-	Vertex{glm::vec3(0.1f, -0.1f,  0.1f)},
-	Vertex{glm::vec3(-0.1f,  0.1f,  0.1f)},
-	Vertex{glm::vec3(-0.1f,  0.1f, -0.1f)},
-	Vertex{glm::vec3(0.1f,  0.1f, -0.1f)},
-	Vertex{glm::vec3(0.1f,  0.1f,  0.1f)}
+	Vertex{glm::vec3(-1.0f, -1.0f,  1.0f)},
+	Vertex{glm::vec3(-1.0f, -1.0f, -1.0f)},
+	Vertex{glm::vec3(1.0f, -1.0f, -1.0f)},
+	Vertex{glm::vec3(1.0f, -1.0f,  1.0f)},
+	Vertex{glm::vec3(-1.0f,  1.0f,  1.0f)},
+	Vertex{glm::vec3(-1.0f,  1.0f, -1.0f)},
+	Vertex{glm::vec3(1.0f,  1.0f, -1.0f)},
+	Vertex{glm::vec3(1.0f,  1.0f,  1.0f)}
 };
 
 GLuint lightIndices[] =
@@ -151,13 +151,13 @@ int main()
 	//Load GLAD so it configures OpenGL
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 	// Specify the viewport of OpenGL in the Window
-	//glViewport(0, 0, width, height);
+	glViewport(0, 0, width, height);
 
 		// Enables the Depth Buffer
 	glEnable(GL_DEPTH_TEST);
 
 	// Generates Shader object using shaders default.vert and default.frag
-	Shader shaderProgram("default.vert", "default.frag");
+	Shader shader("default.vert", "default.frag");
 	Shader skyboxShader("skybox.vs", "skybox.fs");
 
 
@@ -173,18 +173,15 @@ int main()
 
 
 	glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	glm::vec3 lightPos = glm::vec3(0.5f, 0.5f, 0.5f);
+	glm::vec3 lightPos = glm::vec3(98.0f, 9.0f, -98.0f);
 	glm::mat4 lightModel = glm::mat4(1.0f);
 	lightModel = glm::translate(lightModel, lightPos);
 
 	lightShader.use();
-	glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(lightModel));
-	glUniform4f(glGetUniformLocation(lightShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
-
-	// Creates camera object
-	//Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
-
-	Model model("Models/scene.gltf");
+	lightShader.setMat4("model", lightModel);
+	lightShader.setVec4("lightColor", lightColor);
+	
+	Model model("Models/island_big.ply");
 
 
 	// Create VAO, VBO, and EBO for the skybox
@@ -258,6 +255,7 @@ int main()
 	Texture lakeTextures[]
 	{
 		{ 0, "texture_diffuse", "Textures/water.jpg"},
+		{ 1, "texture_normal", "Textures/water_normal.jpg"},
 		{ cubemapTexture, "cubemap",""}
 		//Texture((parentDir + texPath + "planksSpec.png").c_str(), "specular", 1, GL_RED, GL_UNSIGNED_BYTE)
 	};
@@ -271,7 +269,6 @@ int main()
 	Mesh Lake(verts, ind, tex);
 
 	skyboxShader.use();
-	//glUniform1i(glGetUniformLocation(skyboxShader.ID, "skybox"), 0);
 	skyboxShader.setInt("skybox", 0);
 
 	lakeShader.use();
@@ -293,11 +290,19 @@ int main()
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		// Clean the back buffer and depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		
+		lightShader.use();
+		glm::mat4 view = camera.GetViewMatrix();
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)width / (float)height, 0.1f, 100.0f);
+		lightShader.setMat4("view", view);
+		lightShader.setMat4("projection", projection);
+
+		light.Draw(lightShader);
+
+		model.Draw(shader);
 
 		lakeShader.use();
 		glm::mat4 model = glm::mat4(1.0f);
-		glm::mat4 view = camera.GetViewMatrix();
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)width / (float)height, 0.1f, 100.0f);
 		lakeShader.setMat4("model", model);
 		lakeShader.setMat4("view", view);
 		lakeShader.setMat4("projection", projection);
