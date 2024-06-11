@@ -23,7 +23,7 @@ const unsigned int width = 800;
 const unsigned int height = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 3.0f, 0.0f));
+Camera camera(glm::vec3(1.0f, 3.0f, 1.0f));
 float lastX = width / 2.0f;
 float lastY = height / 2.0f;
 bool firstMouse = true;
@@ -157,7 +157,6 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 
 	// Generates Shader object using shaders default.vert and default.frag
-	Shader shader("default.vert", "default.frag");
 	Shader skyboxShader("skybox.vs", "skybox.fs");
 
 
@@ -173,7 +172,7 @@ int main()
 
 
 	glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	glm::vec3 lightPos = glm::vec3(98.0f, 9.0f, -98.0f);
+	glm::vec3 lightPos = glm::vec3(98.0f, 99.0f, -98.0f);
 	glm::mat4 lightModel = glm::mat4(1.0f);
 	lightModel = glm::translate(lightModel, lightPos);
 
@@ -181,7 +180,31 @@ int main()
 	lightShader.setMat4("model", lightModel);
 	lightShader.setVec4("lightColor", lightColor);
 	
-	Model model("Models/island_big.ply");
+	Shader islandShader("default.vert", "default.frag");
+
+	Model island_big("Models/island_big.ply");
+	Model island_small("Models/island_small.ply");
+	Model leaves("Models/leaves.ply");
+	Model tree("Models/tree.ply");
+	Model bridge("Models/bridge.ply");
+	Model stone("Models/stone.ply");
+	Model roof("Models/roof.ply");
+	Model wall("Models/wall.ply");
+
+	glm::vec4 objectColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	glm::vec3 objectPos = glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::mat4 objectModel = glm::mat4(1.0f);
+	objectModel = glm::translate(objectModel, objectPos);
+
+	islandShader.use();
+	glm::mat4 scale = glm::mat4(1.0f);
+	glm::vec3 sca = glm::vec3(0.2f, 0.2f, 0.2f);
+	scale = glm::scale(scale, sca);
+	glm::quat rotat = glm::angleAxis(glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	glm::mat4 rotation = glm::mat4_cast(rotat);
+	islandShader.setMat4("rotation", rotation);
+	islandShader.setMat4("model", objectModel);
+	islandShader.setMat4("scale", scale);
 
 
 	// Create VAO, VBO, and EBO for the skybox
@@ -255,7 +278,7 @@ int main()
 	Texture lakeTextures[]
 	{
 		{ 0, "texture_diffuse", "Textures/water.jpg"},
-		{ 1, "texture_normal", "Textures/water_normal.jpg"},
+		{ 1, "texture_", "Textures/water_specular.jpg"},
 		{ cubemapTexture, "cubemap",""}
 		//Texture((parentDir + texPath + "planksSpec.png").c_str(), "specular", 1, GL_RED, GL_UNSIGNED_BYTE)
 	};
@@ -283,7 +306,6 @@ int main()
 		lastFrame = currentFrame;
 
 		// input
-		// -----
 		processInput(window);
 
 		// Specify the color of the background
@@ -299,7 +321,32 @@ int main()
 
 		light.Draw(lightShader);
 
-		model.Draw(shader);
+		islandShader.use();
+		islandShader.setMat4("view", view);
+		islandShader.setMat4("projection", projection);
+
+		objectColor = glm::vec4(0.83f, 0.62f, 0.13f, 1.0f);
+		islandShader.setVec4("objectColor", objectColor);
+		island_big.Draw(islandShader);
+		objectColor = glm::vec4(0.71f, 0.96f, 0.46f, 1.0f);
+		islandShader.setVec4("objectColor", objectColor);
+		island_small.Draw(islandShader);
+		leaves.Draw(islandShader);
+		objectColor = glm::vec4(0.55f, 0.35f, 0.15f, 1.0f);
+		islandShader.setVec4("objectColor", objectColor);
+		tree.Draw(islandShader);
+		objectColor = glm::vec4(.5f, 0.4f, 0.3f, 1.0f);
+		islandShader.setVec4("objectColor", objectColor);
+		stone.Draw(islandShader);
+		objectColor = glm::vec4(0.88f, 0.79f, 0.70f, 1.0f);
+		islandShader.setVec4("objectColor", objectColor);
+		wall.Draw(islandShader);
+		objectColor = glm::vec4(0.9f, 0.35f, 0.35f, 1.0f);
+		islandShader.setVec4("objectColor", objectColor);
+		roof.Draw(islandShader);
+		objectColor = glm::vec4(.5f, 0.4f, 0.3f, 1.0f);
+		islandShader.setVec4("objectColor", objectColor);
+		bridge.Draw(islandShader);
 
 		lakeShader.use();
 		glm::mat4 model = glm::mat4(1.0f);
