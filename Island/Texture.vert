@@ -7,12 +7,17 @@ layout (location = 2) in vec2 aText;
 uniform mat4 model;
 uniform mat4 projection;
 uniform mat4 view;
+uniform vec3 camPos;
 
+out vec4 clipSpace;
 out vec2 texCoord;
-
+out vec3 toCam;
 
 void main()
 {
-	gl_Position = projection * view * model *  vec4(aPos, 1.0f);
+	vec4 worldPos =  model *  vec4(aPos, 1.0f);
+	gl_Position = projection * view * worldPos;
+	clipSpace = gl_Position;
 	texCoord = aText;
+	toCam = camPos - worldPos.xyz;
 }

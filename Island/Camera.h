@@ -68,6 +68,12 @@ public:
         return glm::lookAt(this->Position, this->Position + this->Front, this->Up);
     }
 
+    void invertPitch()
+    {
+        this->Pitch = - this->Pitch;
+        this->updateCameraVectors();
+    }
+
     // Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
     void ProcessKeyboard(Camera_Movement direction, GLfloat deltaTime)
     {

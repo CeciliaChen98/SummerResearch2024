@@ -323,12 +323,19 @@ int main()
 		// Specify the color of the background
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		
-		//glEnable(GL_CLIP_DISTANCE0);
+		glEnable(GL_CLIP_DISTANCE0);
 		// Clean the back buffer and depth buffer
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		lakeFBO.BindReflectionBuffer();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
+		glEnable(GL_DEPTH_TEST);
+
+		// 1.0f is the height of the lake
+		float distance = 2 * (camera.Position.y - 1.0f);
+		camera.Position.y -= distance;
+		camera.invertPitch();
+
 		lightShader.use();
 		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)width / (float)height, 0.1f, 100.0f);
@@ -340,6 +347,8 @@ int main()
 		islandShader.use();
 		islandShader.setMat4("view", view);
 		islandShader.setMat4("projection", projection);
+		glm::vec4 planeVec = glm::vec4(0, 1, 0, -1);
+		islandShader.setVec4("plane", planeVec);
 
 		objectColor = glm::vec4(0.83f, 0.62f, 0.13f, 1.0f);
 		islandShader.setVec4("objectColor", objectColor);
@@ -364,6 +373,7 @@ int main()
 		islandShader.setVec4("objectColor", objectColor);
 		bridge.Draw(islandShader);
 
+		
 		// Since the cubemap will always have a depth of 1.0, we need that equal sign so it doesn't get discarded
 		glDepthFunc(GL_LEQUAL);
 
@@ -380,8 +390,14 @@ int main()
 
 		// Switch back to the normal depth function
 		glDepthFunc(GL_LESS);
+		
+		camera.Position.y += distance;
+		camera.invertPitch();
+
 
 		lakeFBO.UnbindBuffer();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glDisable(GL_CLIP_DISTANCE0);
 
 		lightShader.use();
 		view = camera.GetViewMatrix();
@@ -394,6 +410,8 @@ int main()
 		islandShader.use();
 		islandShader.setMat4("view", view);
 		islandShader.setMat4("projection", projection);
+		planeVec = glm::vec4(0, 1, 0, -1);
+		islandShader.setVec4("plane", planeVec);
 
 		objectColor = glm::vec4(0.83f, 0.62f, 0.13f, 1.0f);
 		islandShader.setVec4("objectColor", objectColor);
@@ -454,9 +472,13 @@ int main()
 		frameShader.setMat4("model", model);
 		frameShader.setMat4("view", view);
 		frameShader.setMat4("projection", projection);
-		glActiveTexture(GL_TEXTURE3);
-		frameShader.setInt("frameBuffer", water->id);
-		glBindTexture(GL_TEXTURE_2D, water->id);
+		frameShader.setVec3("camPos", camera.Position);
+		glActiveTexture(GL_TEXTURE0);
+		frameShader.setInt("frameBuffer",0);
+		glBindTexture(GL_TEXTURE_2D, 2);
+		glActiveTexture(GL_TEXTURE1);
+		frameShader.setInt("texture_specular1", 0);
+		glBindTexture(GL_TEXTURE_2D, 5);
 
 		Lake.Draw(frameShader);
 

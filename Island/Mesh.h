@@ -37,24 +37,6 @@ struct Texture {
     string path;
 };
 
-Texture* CreateTextureAttachment(int width, int height) 
-{
-    Texture* texture = new Texture();
-
-    texture->type = "";
-    texture->path = "";
-
-    glGenTextures(1, &(texture->id));
-    glBindTexture(GL_TEXTURE_2D, texture->id);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture->id, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture->id, 0);
-    return texture;
-}
 
 class Mesh {
 public:   
@@ -79,6 +61,7 @@ public:
     // render the mesh
     void Draw(Shader& shader)
     {
+        /*
         // bind appropriate textures
         unsigned int diffuseNr = 1;
         unsigned int specularNr = 1;
@@ -113,7 +96,7 @@ public:
                 glBindTexture(GL_TEXTURE_2D, textures[i].id);
             }
         }
-
+        */
         // draw mesh
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
