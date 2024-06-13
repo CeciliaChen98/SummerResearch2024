@@ -14,7 +14,7 @@ vec4 direcLight(vec4 Rcolor)
 {
 	vec4 lightColor = vec4(1.0f,1.0f,1.0f,1.0f);
 	// ambient lighting
-	float ambient = 0.3f;
+	float ambient = 0.2f;
 
 	// diffuse lighting
 	vec3 normal = -normalize(Normal);
@@ -29,7 +29,7 @@ vec4 direcLight(vec4 Rcolor)
 	float specular = specAmount * specularLight;
 
 	//return (texture(tex0, texCoord) * (diffuse + ambient) + texture(tex1, texCoord).r * specular) * lightColor;
-	return texture(texture_diffuse1, texCoord) * (ambient) + texture(texture_specular1, texCoord).r*Rcolor*(diffuse+ambient) + lightColor*specular;
+	return texture(texture_specular1, texCoord).r*texture(texture_diffuse1, texCoord) * (ambient) + Rcolor*(diffuse) + lightColor*specular;
 }
 
 

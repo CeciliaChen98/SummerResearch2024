@@ -37,8 +37,27 @@ struct Texture {
     string path;
 };
 
+Texture* CreateTextureAttachment(int width, int height) 
+{
+    Texture* texture = new Texture();
+
+    texture->type = "";
+    texture->path = "";
+
+    glGenTextures(1, &(texture->id));
+    glBindTexture(GL_TEXTURE_2D, texture->id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture->id, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture->id, 0);
+    return texture;
+}
+
 class Mesh {
-public:
+public:   
     // mesh Data
     vector<Vertex>       vertices;
     vector<unsigned int> indices;
@@ -90,7 +109,6 @@ public:
 
                 // now set the sampler to the correct texture unit
                 glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
-                //glUniform1i(glGetUniformLocation(shader.ID, "texture_diffuse1"), i);
                 // and finally bind the texture
                 glBindTexture(GL_TEXTURE_2D, textures[i].id);
             }

@@ -13,6 +13,7 @@
 #include"Camera.h"
 #include"Mesh.h"
 #include"Model.h"
+#include"WaterFrameBuffer.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -74,9 +75,9 @@ unsigned int skyboxIndices[] =
 Vertex lakeVertices[] =
 {
 	Vertex{glm::vec3(-100.0f, 1.0f,  100.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
-	Vertex{glm::vec3(-100.0f, 1.0f, -100.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 10.0f)},
-	Vertex{glm::vec3(100.0f, 1.0f, -100.0f),  glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(10.0f, 10.0f)},
-	Vertex{glm::vec3(100.0f, 1.0f,  100.0f),  glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(10.0f, 0.0f)}
+	Vertex{glm::vec3(-100.0f, 1.0f, -100.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 100.0f)},
+	Vertex{glm::vec3(100.0f, 1.0f, -100.0f),  glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(100.0f, 100.0f)},
+	Vertex{glm::vec3(100.0f, 1.0f,  100.0f),  glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(100.0f, 0.0f)}
 };
 
 
@@ -226,12 +227,12 @@ int main()
 	// All the faces of the cubemap (make sure they are in this exact order)
 	std::string facesCubemap[6] =
 	{
-		"Textures/skybox/right.jpg",
-		"Textures/skybox/left.jpg",
-		"Textures/skybox/top.jpg",
-		"Textures/skybox/bottom.jpg",
-		"Textures/skybox/front.jpg",
-		"Textures/skybox/back.jpg"
+		"Textures/cubemap/right.jpg",
+		"Textures/cubemap/left.jpg",
+		"Textures/cubemap/top.jpg",
+		"Textures/cubemap/bottom.jpg",
+		"Textures/cubemap/front.jpg",
+		"Textures/cubemap/back.jpg"
 	};
 
 	// Creates the cubemap texture object
@@ -274,14 +275,23 @@ int main()
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
+	WaterFrameBuffer lakeFBO;
+	Texture* water = lakeFBO.GetReflectionTexture();
+
+	Shader frameShader("Texture.vert", "Texture.frag");
+	frameShader.use();
+	frameShader.setInt("frameBuffer", water->id);
+
+
 	// Texture data
 	Texture lakeTextures[]
 	{
-		{ 0, "texture_diffuse", "Textures/water.jpg"},
-		{ 1, "texture_", "Textures/water_specular.jpg"},
+		{ 0, "texture_diffuse", "Textures/water_color.jpg"},
+		{ 1, "texture_specular", "Textures/water.jpg"},
 		{ cubemapTexture, "cubemap",""}
 		//Texture((parentDir + texPath + "planksSpec.png").c_str(), "specular", 1, GL_RED, GL_UNSIGNED_BYTE)
 	};
+
 
 	Shader lakeShader("lake.vs", "lake.fs");
 	// Store mesh data in vectors for the lake mesh
@@ -297,6 +307,7 @@ int main()
 	lakeShader.use();
 	lakeShader.setInt("skybox", 1);
 
+
 	// Main while loop
 	while (!glfwWindowShouldClose(window))
 	{
@@ -308,10 +319,15 @@ int main()
 		// input
 		processInput(window);
 
+
 		// Specify the color of the background
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		
+		//glEnable(GL_CLIP_DISTANCE0);
 		// Clean the back buffer and depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		lakeFBO.BindReflectionBuffer();
 		
 		lightShader.use();
 		glm::mat4 view = camera.GetViewMatrix();
@@ -348,14 +364,59 @@ int main()
 		islandShader.setVec4("objectColor", objectColor);
 		bridge.Draw(islandShader);
 
-		lakeShader.use();
-		glm::mat4 model = glm::mat4(1.0f);
-		lakeShader.setMat4("model", model);
-		lakeShader.setMat4("view", view);
-		lakeShader.setMat4("projection", projection);
-		lakeShader.setVec3("cameraPos", camera.Position);
+		// Since the cubemap will always have a depth of 1.0, we need that equal sign so it doesn't get discarded
+		glDepthFunc(GL_LEQUAL);
 
-		Lake.Draw(lakeShader);
+		skyboxShader.use();
+		view = camera.GetViewMatrix();
+		skyboxShader.setMat4("view", view);
+		skyboxShader.setMat4("projection", projection);
+
+		glBindVertexArray(skyboxVAO);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+
+		// Switch back to the normal depth function
+		glDepthFunc(GL_LESS);
+
+		lakeFBO.UnbindBuffer();
+
+		lightShader.use();
+		view = camera.GetViewMatrix();
+		projection = glm::perspective(glm::radians(camera.Zoom), (float)width / (float)height, 0.1f, 100.0f);
+		lightShader.setMat4("view", view);
+		lightShader.setMat4("projection", projection);
+
+		light.Draw(lightShader);
+
+		islandShader.use();
+		islandShader.setMat4("view", view);
+		islandShader.setMat4("projection", projection);
+
+		objectColor = glm::vec4(0.83f, 0.62f, 0.13f, 1.0f);
+		islandShader.setVec4("objectColor", objectColor);
+		island_big.Draw(islandShader);
+		objectColor = glm::vec4(0.71f, 0.96f, 0.46f, 1.0f);
+		islandShader.setVec4("objectColor", objectColor);
+		island_small.Draw(islandShader);
+		leaves.Draw(islandShader);
+		objectColor = glm::vec4(0.55f, 0.35f, 0.15f, 1.0f);
+		islandShader.setVec4("objectColor", objectColor);
+		tree.Draw(islandShader);
+		objectColor = glm::vec4(.5f, 0.4f, 0.3f, 1.0f);
+		islandShader.setVec4("objectColor", objectColor);
+		stone.Draw(islandShader);
+		objectColor = glm::vec4(0.88f, 0.79f, 0.70f, 1.0f);
+		islandShader.setVec4("objectColor", objectColor);
+		wall.Draw(islandShader);
+		objectColor = glm::vec4(0.9f, 0.35f, 0.35f, 1.0f);
+		islandShader.setVec4("objectColor", objectColor);
+		roof.Draw(islandShader);
+		objectColor = glm::vec4(.5f, 0.4f, 0.3f, 1.0f);
+		islandShader.setVec4("objectColor", objectColor);
+		bridge.Draw(islandShader);
 
 		// Since the cubemap will always have a depth of 1.0, we need that equal sign so it doesn't get discarded
 		glDepthFunc(GL_LEQUAL);
@@ -374,6 +435,32 @@ int main()
 		// Switch back to the normal depth function
 		glDepthFunc(GL_LESS);
 
+		/*
+		lakeShader.use();
+		glm::mat4 model = glm::mat4(1.0f);
+		lakeShader.setMat4("model", model);
+		lakeShader.setMat4("view", view);
+		lakeShader.setMat4("projection", projection);
+		lakeShader.setVec3("cameraPos", camera.Position);
+
+		glActiveTexture(GL_TEXTURE0);
+		lakeShader.setInt("texture_diffuse1", water->id);
+		glBindTexture(GL_TEXTURE_2D, water->id); 
+		*/
+
+		frameShader.use();
+
+		glm::mat4 model = glm::mat4(1.0f);
+		frameShader.setMat4("model", model);
+		frameShader.setMat4("view", view);
+		frameShader.setMat4("projection", projection);
+		glActiveTexture(GL_TEXTURE3);
+		frameShader.setInt("frameBuffer", water->id);
+		glBindTexture(GL_TEXTURE_2D, water->id);
+
+		Lake.Draw(frameShader);
+
+
 		// Swap the back buffer with the front buffer
 		glfwSwapBuffers(window);
 		// Take care of all GLFW events
@@ -382,6 +469,7 @@ int main()
 
 	glDeleteVertexArrays(1, &skyboxVAO);
 	glDeleteBuffers(1, &skyboxVBO);
+	//lakeFBO.~WaterFrameBuffer();
 
 	// Delete window before ending the program
 	glfwDestroyWindow(window);
