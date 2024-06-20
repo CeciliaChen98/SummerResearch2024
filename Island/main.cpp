@@ -181,11 +181,11 @@ int main()
 	lightShader.setMat4("model", lightModel);
 	lightShader.setVec4("lightColor", lightColor);
 	
-	Shader islandShader("default.vert", "default.frag");
+	Shader islandShader("color.vert", "color.frag");
 
-	Model island_big("Models/island_big.ply");
-	Model island_small("Models/island_small.ply");
-	Model leaves("Models/leaves.ply");
+	Model island_big("Models/sand.ply");
+	Model island_small("Models/grass.ply");
+	Model leaves("Models/leaf.ply");
 	Model tree("Models/tree.ply");
 	Model bridge("Models/bridge.ply");
 	Model stone("Models/stone.ply");
@@ -227,12 +227,12 @@ int main()
 	// All the faces of the cubemap (make sure they are in this exact order)
 	std::string facesCubemap[6] =
 	{
-		"Textures/cubemap/right.jpg",
-		"Textures/cubemap/left.jpg",
-		"Textures/cubemap/top.jpg",
+		"Textures/skybox/right.jpg",
+		"Textures/skybox/left.jpg", 
+		"Textures/skybox/top.jpg",
 		"Textures/cubemap/bottom.jpg",
-		"Textures/cubemap/front.jpg",
-		"Textures/cubemap/back.jpg"
+		"Textures/skybox/front.jpg",
+		"Textures/skybox/behind.jpg"
 	};
 
 	// Creates the cubemap texture object
@@ -287,7 +287,7 @@ int main()
 	Texture lakeTextures[]
 	{
 		{ 0, "texture_diffuse", "Textures/water_color.jpg"},
-		{ 1, "texture_specular", "Textures/water.jpg"},
+		{ 1, "texture_specular", "Textures/water_specular.jpg"},
 		{ cubemapTexture, "cubemap",""}
 		//Texture((parentDir + texPath + "planksSpec.png").c_str(), "specular", 1, GL_RED, GL_UNSIGNED_BYTE)
 	};
@@ -307,6 +307,45 @@ int main()
 	lakeShader.use();
 	lakeShader.setInt("skybox", 1);
 
+	// Create a depth map FBO
+	GLuint depthMapFBO;
+	glGenFramebuffers(1, &depthMapFBO);
+
+	const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+
+	// Store the ID of the texture
+	GLuint depthMap;
+	glGenTextures(1, &depthMap);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+
+	// Set it as GL_DEPTH_COMPONENT
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+		SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+	GLfloat near_plane = -10.0f, far_plane = 10.0f;
+	glm::mat4 lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, near_plane, far_plane);
+	glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	lightProjection = lightProjection * lightView;
+
+	Shader shadowShader("shadow.vert", "shadow.frag");
+	shadowShader.use();
+	shadowShader.setMat4("lightProjection", lightProjection);
+	glm::mat4 model = objectModel * rotation * scale;
+	shadowShader.setMat4("model",model);
+
 
 	// Main while loop
 	while (!glfwWindowShouldClose(window))
@@ -319,10 +358,31 @@ int main()
 		// input
 		processInput(window);
 
-
+		glEnable(GL_DEPTH_TEST);
 		// Specify the color of the background
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+
+		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+		glClear(GL_DEPTH_BUFFER_BIT);
+
+		glm::mat4 view = camera.GetViewMatrix();
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)width / (float)height, 0.1f, 100.0f);
+		glm::vec4 planeVec = glm::vec4(0, 1, 0, -1);
+
+		island_big.Draw(shadowShader);
+		island_small.Draw(shadowShader);
+		leaves.Draw(shadowShader);
+		tree.Draw(shadowShader);
+		stone.Draw(shadowShader);
+		wall.Draw(shadowShader);
+		roof.Draw(shadowShader);
+		bridge.Draw(shadowShader);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		
+		glViewport(0, 0, 800, 600);
+
 		glEnable(GL_CLIP_DISTANCE0);
 		// Clean the back buffer and depth buffer
 
@@ -337,8 +397,8 @@ int main()
 		camera.invertPitch();
 
 		lightShader.use();
-		glm::mat4 view = camera.GetViewMatrix();
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)width / (float)height, 0.1f, 100.0f);
+		view = camera.GetViewMatrix();
+		projection = glm::perspective(glm::radians(camera.Zoom), (float)width / (float)height, 0.1f, 100.0f);
 		lightShader.setMat4("view", view);
 		lightShader.setMat4("projection", projection);
 
@@ -347,8 +407,14 @@ int main()
 		islandShader.use();
 		islandShader.setMat4("view", view);
 		islandShader.setMat4("projection", projection);
-		glm::vec4 planeVec = glm::vec4(0, 1, 0, -1);
+		planeVec = glm::vec4(0, 1, 0, -1);
 		islandShader.setVec4("plane", planeVec);
+		islandShader.setMat4("lightProjection", lightProjection);
+		islandShader.setVec3("camPos", camera.Position);
+		islandShader.setVec3("lightPos", lightPos);
+		glActiveTexture(GL_TEXTURE0);
+		islandShader.setInt("shadowMap", 0);
+		glBindTexture(GL_TEXTURE_2D, depthMap);
 
 		objectColor = glm::vec4(0.83f, 0.62f, 0.13f, 1.0f);
 		islandShader.setVec4("objectColor", objectColor);
@@ -412,6 +478,12 @@ int main()
 		islandShader.setMat4("projection", projection);
 		planeVec = glm::vec4(0, 1, 0, -1);
 		islandShader.setVec4("plane", planeVec);
+		islandShader.setMat4("lightProjection", lightProjection);
+		islandShader.setVec3("camPos", camera.Position);
+		islandShader.setVec3("lightPos", lightPos);
+		glActiveTexture(GL_TEXTURE0);
+		islandShader.setInt("shadowMap", 0);
+		glBindTexture(GL_TEXTURE_2D, depthMap);
 
 		objectColor = glm::vec4(0.83f, 0.62f, 0.13f, 1.0f);
 		islandShader.setVec4("objectColor", objectColor);
@@ -453,19 +525,6 @@ int main()
 		// Switch back to the normal depth function
 		glDepthFunc(GL_LESS);
 
-		/*
-		lakeShader.use();
-		glm::mat4 model = glm::mat4(1.0f);
-		lakeShader.setMat4("model", model);
-		lakeShader.setMat4("view", view);
-		lakeShader.setMat4("projection", projection);
-		lakeShader.setVec3("cameraPos", camera.Position);
-
-		glActiveTexture(GL_TEXTURE0);
-		lakeShader.setInt("texture_diffuse1", water->id);
-		glBindTexture(GL_TEXTURE_2D, water->id); 
-		*/
-
 		frameShader.use();
 
 		glm::mat4 model = glm::mat4(1.0f);
@@ -477,8 +536,11 @@ int main()
 		frameShader.setInt("frameBuffer",0);
 		glBindTexture(GL_TEXTURE_2D, 2);
 		glActiveTexture(GL_TEXTURE1);
-		frameShader.setInt("texture_specular1", 0);
+		frameShader.setInt("texture_diffuse1", 1);
 		glBindTexture(GL_TEXTURE_2D, 5);
+		glActiveTexture(GL_TEXTURE2);
+		frameShader.setInt("texture_specular1", 2);
+		glBindTexture(GL_TEXTURE_2D, 6);
 
 		Lake.Draw(frameShader);
 
