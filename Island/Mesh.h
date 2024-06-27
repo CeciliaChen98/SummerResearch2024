@@ -55,7 +55,7 @@ public:
 
         // now that we have all the required data, set the vertex buffers and its attribute pointers.
         setupMesh();
-        setupTexture();
+        //setupTexture();
     }
 
     // render the mesh
